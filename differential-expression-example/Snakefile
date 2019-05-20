@@ -1,0 +1,42 @@
+from os.path import join
+
+# URLs
+PBMC_URL="https://www.dropbox.com/s/79q6dttg8yl20zg/immune_alignment_expression_matrices.zip?dl=1"
+
+# Directories
+RAW_DIR="raw"
+OUT_DIR="output"
+
+# Files
+PBMC_ZIP_FILE=join(RAW_DIR, "pbmc_data.zip")
+CTRL_GZ_MAT=join(RAW_DIR, "immune_control_expression_matrix.txt.gz")
+STIM_GZ_MAT=join(RAW_DIR, "immune_stimulated_expression_matrix.txt.gz")
+SEURAT_OBJ_FILE=join(OUT_DIR, "seurat_object.rds")
+
+
+rule run_seurat:
+    input:
+        stim=STIM_GZ_MAT,
+        ctrl=CTRL_GZ_MAT
+    output:
+        seurat_file=SEURAT_OBJ_FILE
+    script:
+        "src/run_seurat.R"
+
+
+rule unzip_PBMC_data:
+    input:
+        PBMC_ZIP_FILE
+    output:
+        STIM_GZ_MAT,
+        CTRL_GZ_MAT
+    shell:
+        "unzip {input} -d {RAW_DIR}"
+
+rule download_data:
+    params:
+        PBMC_URL
+    output:
+        PBMC_ZIP_FILE
+    shell:
+        "wget -O {output} {params}"
