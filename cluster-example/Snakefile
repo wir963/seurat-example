@@ -1,0 +1,57 @@
+from os.path import join
+
+# URLs
+PBMC_URL="https://s3-us-west-2.amazonaws.com/10x.files/samples/cell/pbmc3k/pbmc3k_filtered_gene_bc_matrices.tar.gz"
+
+# Directories
+RAW_DIR="raw"
+OUT_DIR="output"
+PBMC_DIR=join(RAW_DIR, "filtered_gene_bc_matrices", "hg19")
+
+# Files
+PBMC_GZ_FILE=join(RAW_DIR, "pbmc_data.tar.gz")
+PBMC_MATRIX_FILE=join(PBMC_DIR, "matrix.mtx")
+PBMC_GENES_FILE=join(PBMC_DIR, "genes.tsv")
+PBMC_BARCODES_FILE=join(PBMC_DIR, "barcodes.tsv")
+
+QC_VOLCANO_PLOT=join(OUT_DIR, "qc_volcano_plot.pdf")
+SEURAT_OBJECT_FILE=join(OUT_DIR, "seurat_object.rds")
+
+
+rule all:
+    input:
+        SEURAT_OBJECT_FILE
+
+
+rule run_seurat:
+    params:
+        PBMC_DIR
+    input:
+        PBMC_MATRIX_FILE,
+        PBMC_GENES_FILE,
+        PBMC_BARCODES_FILE
+    output:
+        qc_volcano_plot=QC_VOLCANO_PLOT,
+        seurat_object=SEURAT_OBJECT_FILE
+    script:
+        "src/run_seurat.R"
+
+
+rule uncompress_PBMC_data:
+    input:
+        PBMC_GZ_FILE
+    output:
+        PBMC_MATRIX_FILE,
+        PBMC_GENES_FILE,
+        PBMC_BARCODES_FILE
+    shell:
+        "tar xvzf {input} -C {RAW_DIR}"
+
+
+rule download_PBMC_data:
+    params:
+        PBMC_URL
+    output:
+        PBMC_GZ_FILE
+    shell:
+        "wget -O {output} {params}"
